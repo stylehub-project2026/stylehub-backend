@@ -18,19 +18,32 @@ const reviewRoutes = require('./routes/reviewRoutes');
 const addressRoutes = require('./routes/addressRoutes');
 const sellerRoutes = require('./routes/sellerRoutes');
 
+const path = require('path');
 const app = express();
 
-connectDB();
+connectDB().catch(err => console.error('MongoDB connection error:', err)); connectDB();
 
 app.use(helmet({
   crossOriginResourcePolicy: { policy: 'cross-origin' },
 }));
 
 // Manual CORS — works reliably with Express 5
+const allowedOrigins = [
+  'http://localhost:5173',
+  'http://localhost:5174',
+  'http://localhost:3000',
+  'https://stylehub-frontend-ten.vercel.app/',
+];
+
 app.use((req, res, next) => {
-  res.setHeader('Access-Control-Allow-Origin', process.env.FRONTEND_URL || '*');
+  const origin = req.headers.origin;
+  if (!origin || allowedOrigins.includes(origin)) {  // أضفنا !origin
+    res.setHeader('Access-Control-Allow-Origin', origin || '*');
+  }
+
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  res.setHeader('Access-Control-Allow-Credentials', 'true');
   if (req.method === 'OPTIONS') {
     return res.status(204).end();
   }
@@ -43,6 +56,7 @@ if (process.env.NODE_ENV === 'development') {
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
+app.use('/uploads', express.static(path.join(__dirname, 'public/uploads')));
 
 app.use('/api/customer/auth', rateLimiter);
 app.use('/api/seller/auth', rateLimiter);
