@@ -21,7 +21,7 @@ const sellerRoutes = require('./routes/sellerRoutes');
 const path = require('path');
 const app = express();
 
-connectDB().catch(err => console.error('MongoDB connection error:', err)); connectDB();
+connectDB().catch(err => console.error('MongoDB connection error:', err));
 
 app.use(helmet({
   crossOriginResourcePolicy: { policy: 'cross-origin' },
@@ -32,7 +32,7 @@ const allowedOrigins = [
   'http://localhost:5173',
   'http://localhost:5174',
   'http://localhost:3000',
-  'https://stylehub-frontend-ten.vercel.app/',
+  'https://stylehub-frontend-ten.vercel.app',
 ];
 
 app.use((req, res, next) => {
