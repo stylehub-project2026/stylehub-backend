@@ -55,7 +55,7 @@ const createProduct = async (req, res, next) => {
     const { name, description, price, salePrice, category, tags, sizes, colors, stock } = req.body;
 
     const images = req.files && req.files.length > 0
-      ? req.files.map(f => `/uploads/products/${f.filename}`)
+      ? req.files.map(f => f.path)
       : [];
 
     const parsedSizes = Array.isArray(sizes) ? sizes : sizes ? sizes.split(',').map(s => s.trim()).filter(Boolean) : [];
