@@ -4,5 +4,6 @@ module.exports = rateLimit({
   max: 20,
   standardHeaders: true,
   legacyHeaders: false,
+  validate: { xForwardedForHeader: false },
   message: { success: false, message: 'Too many requests, please try again later.' },
 });
