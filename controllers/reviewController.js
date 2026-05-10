@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 const Review = require('../models/Review');
 const Product = require('../models/Product');
+const Customer = require('../models/Customer');
 
 const updateProductRating = async (productId) => {
     const results = await Review.aggregate([
@@ -34,6 +35,9 @@ const addReview = async (req, res, next) => {
             await updateProductRating(req.params.productId);
         });
         await session.endSession();
+
+        // ── Give 10 points for reviewing ──
+        await Customer.findByIdAndUpdate(req.user._id, { $inc: { points: 10 } });
         const populatedReview = await Review.findOne({ product: req.params.productId, customer: req.user._id }).populate('customer', 'firstName lastName');
         res.status(201).json({ success: true, data: { review: populatedReview } });
     } catch (err) { next(err); }
@@ -86,4 +90,25 @@ const deleteReview = async (req, res, next) => {
     } catch (err) { next(err); }
 };
 
-module.exports = { addReview, getProductReviews, updateReview, deleteReview };
+// ── POINTS: get customer points ──
+const getMyPoints = async (req, res, next) => {
+    try {
+        const customer = await Customer.findById(req.user._id).select('points');
+        res.json({ success: true, data: { points: customer.points || 0 } });
+    } catch (err) { next(err); }
+};
+
+// ── POINTS: redeem points for discount (100 pts = LE 10) ──
+const redeemPoints = async (req, res, next) => {
+    try {
+        const { pointsToRedeem } = req.body;
+        const customer = await Customer.findById(req.user._id).select('points');
+        if (!customer) return res.status(404).json({ success: false, message: 'Customer not found.' });
+        if (pointsToRedeem > customer.points) return res.status(400).json({ success: false, message: 'Not enough points.' });
+        const discount = Math.floor(pointsToRedeem / 100) * 10;
+        await Customer.findByIdAndUpdate(req.user._id, { $inc: { points: -pointsToRedeem } });
+        res.json({ success: true, data: { discount, remainingPoints: customer.points - pointsToRedeem } });
+    } catch (err) { next(err); }
+};
+
+module.exports = { addReview, getProductReviews, updateReview, deleteReview, getMyPoints, redeemPoints };

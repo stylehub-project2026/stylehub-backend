@@ -9,11 +9,16 @@ const createTransporter = () => {
       user: process.env.EMAIL_USER,
       pass: process.env.EMAIL_PASS,
     },
+    tls: {
+      rejectUnauthorized: false, // Fix self-signed certificate error
+    },
   });
 };
 
 const sendResetPasswordEmail = async ({ to, name, resetToken, role }) => {
-  const resetUrl = `${process.env.FRONTEND_URL || 'http://localhost:5000'}/reset-password?token=${resetToken}&role=${role}`;
+  // Fix: use frontend URL not backend
+  const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5174';
+  const resetUrl = `${frontendUrl}/reset-password?token=${resetToken}&role=${role}`;
 
   if (process.env.NODE_ENV === 'development' && !process.env.EMAIL_USER) {
     console.log(`\n[DEV] Reset link for ${role}: ${resetUrl}\n`);

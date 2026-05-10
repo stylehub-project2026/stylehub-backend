@@ -10,11 +10,20 @@ const {
   resetPasswordValidation,
 } = require('../validators/authValidators');
 
+const { googleAuth } = require('../controllers/googleAuthController');
+require('../config/firebaseAdmin'); // initialize admin
+
+router.post('/google', googleAuth);
+
 router.post('/signup', customerSignUpValidation, signUp);
 router.post('/signin', signInValidation, signIn);
 router.post('/forgot-password', forgotPasswordValidation, forgotPassword);
 router.post('/reset-password', resetPasswordValidation, resetPassword);
 router.get('/me', protect, customerOnly, getMe);
 router.put('/me', protect, customerOnly, updateProfile);
+
+const { getMyPoints, redeemPoints } = require('../controllers/reviewController');
+router.get('/points', protect, customerOnly, getMyPoints);
+router.post('/points/redeem', protect, customerOnly, redeemPoints);
 
 module.exports = router;

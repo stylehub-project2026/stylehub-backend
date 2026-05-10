@@ -10,6 +10,7 @@ const customerSchema = new mongoose.Schema({
     wishlist: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Product' }],
     resetToken: { type: String, select: false },
     resetTokenExpiry: { type: Date, select: false },
+    points: { type: Number, default: 0 },
 }, { timestamps: true });
 
 customerSchema.pre('save', async function (next) {

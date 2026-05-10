@@ -6,7 +6,7 @@ const getDashboard = async (req, res, next) => {
     try {
         const sellerId = req.user._id;
 
-        const products = await Product.find({ seller: sellerId });
+        const products = await Product.find({ seller: sellerId, isActive: true });
         const productIds = products.map(p => p._id);
 
         const orders = await Order.find({ 'items.product': { $in: productIds } });

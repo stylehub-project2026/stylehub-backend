@@ -13,7 +13,8 @@ const getSellerOrders = async (req, res, next) => {
 
         const skip = (Number(page) - 1) * Number(limit);
         const orders = await Order.find(filter)
-            .populate('customer', 'name email phone')
+            .populate('customer', 'firstName lastName email phone')
+            .populate('items.product', 'name images price')
             .sort({ createdAt: -1 })
             .skip(skip)
             .limit(Number(limit));
@@ -29,7 +30,8 @@ const getSellerOrder = async (req, res, next) => {
         const productIds = products.map(p => p._id);
 
         const order = await Order.findOne({ _id: req.params.id, 'items.product': { $in: productIds } })
-            .populate('customer', 'name email phone');
+            .populate('customer', 'firstName lastName email phone')
+            .populate('items.product', 'name images price');
 
         if (!order) return res.status(404).json({ success: false, message: 'Order not found.' });
         res.json({ success: true, data: { order } });
@@ -37,72 +39,45 @@ const getSellerOrder = async (req, res, next) => {
 };
 
 const updateOrderStatus = async (req, res, next) => {
-    const session = await mongoose.startSession();
     try {
         const { status } = req.body;
         const allowed = ['confirmed', 'shipped', 'delivered', 'cancelled'];
         if (!allowed.includes(status)) {
-            await session.endSession();
             return res.status(400).json({ success: false, message: 'Invalid status.' });
         }
 
         const products = await Product.find({ seller: req.user._id }).select('_id');
         const productIds = products.map(p => p._id);
-        let order = await Order.findOne({
+
+        const order = await Order.findOne({
             _id: req.params.id,
             'items.product': { $in: productIds }
-        }).session(session);
+        });
+
         if (!order) {
-            await session.endSession();
             return res.status(404).json({ success: false, message: 'Order not found or not yours.' });
         }
-
         if (order.status === 'cancelled') {
-            await session.endSession();
             return res.status(400).json({ success: false, message: 'Cannot update cancelled order.' });
         }
 
-        let message = 'Order status updated.';
-        await session.withTransaction(async () => {
-            if (status === 'confirmed') {
-                // Deduct stock
-                for (const item of order.items) {
-                    if (productIds.includes(item.product)) {
-                        const product = await Product.findById(item.product).session(session);
-                        if (product && product.stock >= item.quantity) {
-                            product.stock -= item.quantity;
-                            await product.save({ session });
-                        }
-                    }
-                }
-            } else if (status === 'cancelled' && ['pending', 'confirmed'].includes(order.status)) {
-                // Restore stock
-                for (const item of order.items) {
-                    if (productIds.includes(item.product)) {
-                        const product = await Product.findById(item.product).session(session);
-                        if (product) {
-                            product.stock += item.quantity;
-                            await product.save({ session });
-                        }
-                    }
-                }
-                message = 'Order cancelled and stock restored.';
+        // Only restore stock if cancelling a confirmed/pending order
+        // Note: stock is already deducted at order creation, so no need to deduct again on 'confirmed'
+        if (status === 'cancelled' && ['pending', 'confirmed'].includes(order.status)) {
+            for (const item of order.items) {
+                await Product.findByIdAndUpdate(item.product, { $inc: { stock: item.quantity } });
             }
-            // Update status
-            order.status = status;
-            await order.save({ session });
-        });
+        }
+
+        order.status = status;
+        await order.save();
 
         const populatedOrder = await Order.findById(order._id)
-            .populate('customer', 'name email phone')
-            .populate('items.product', 'name');
-        res.json({ success: true, data: { order: populatedOrder }, message });
-    } catch (err) {
-        await session.abortTransaction();
-        next(err);
-    } finally {
-        await session.endSession();
-    }
+            .populate('customer', 'firstName lastName email phone')
+            .populate('items.product', 'name images price');
+
+        res.json({ success: true, data: { order: populatedOrder }, message: 'Order status updated.' });
+    } catch (err) { next(err); }
 };
 
 module.exports = { getSellerOrders, getSellerOrder, updateOrderStatus };
