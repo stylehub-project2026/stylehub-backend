@@ -10,7 +10,7 @@ const {
   resetPasswordValidation,
 } = require('../validators/authValidators');
 
-const { googleAuth } = require('../controllers/googleAuthController');
+require('../controllers/Googleauthcontroller')
 require('../config/firebaseAdmin'); // initialize admin
 
 router.post('/google', googleAuth);
