@@ -7,9 +7,10 @@ const getProducts = async (req, res, next) => {
     const { category, tag, minPrice, maxPrice, search, brand, sellerId, page = 1, limit = 20 } = req.query;
 
     const filter = { isActive: true };
-    if (category) filter.category = category.toLowerCase(); // ✅ lowercase دايما
+    if (category) filter.category = category.toLowerCase();
     if (tag) filter.tags = tag;
     if (sellerId) filter.seller = sellerId;
+    if (req.query.subcategory) filter.subcategory = req.query.subcategory.toLowerCase();
     if (minPrice || maxPrice) {
       filter.price = {};
       if (minPrice) filter.price.$gte = Number(minPrice);
@@ -53,7 +54,7 @@ const getProduct = async (req, res, next) => {
 
 const createProduct = async (req, res, next) => {
   try {
-    const { name, description, price, salePrice, category, tags, sizes, colors, stock } = req.body;
+    const { name, description, price, salePrice, category, subcategory, tags, sizes, colors, stock } = req.body;
 
     const images = req.files && req.files.length > 0
       ? req.files.map(f => f.path)
@@ -68,7 +69,8 @@ const createProduct = async (req, res, next) => {
       description,
       price: Number(price),
       salePrice: salePrice ? Number(salePrice) : undefined,
-      category: category?.toLowerCase() || 'all', // ✅ lowercase دايما
+      category: category?.toLowerCase() || 'all',
+      subcategory: subcategory?.toLowerCase() || null,
       tags: tags ? (Array.isArray(tags) ? tags : [tags]) : [],
       sizes: parsedSizes,
       colors: parsedColors,
@@ -87,13 +89,14 @@ const updateProduct = async (req, res, next) => {
       return res.status(404).json({ success: false, message: 'Product not found.' });
     }
 
-    const { name, description, price, salePrice, category, tags, sizes, colors, stock } = req.body;
+    const { name, description, price, salePrice, category, subcategory, tags, sizes, colors, stock } = req.body;
 
     if (name !== undefined) product.name = name;
     if (description !== undefined) product.description = description;
     if (price !== undefined) product.price = Number(price);
     if (salePrice !== undefined) product.salePrice = salePrice ? Number(salePrice) : undefined;
-    if (category !== undefined) product.category = category.toLowerCase(); // ✅
+    if (category !== undefined) product.category = category.toLowerCase();
+    if (subcategory !== undefined) product.subcategory = subcategory ? subcategory.toLowerCase() : null;
     if (stock !== undefined) product.stock = Number(stock);
     if (tags !== undefined) product.tags = Array.isArray(tags) ? tags : [tags];
 
