@@ -1,4 +1,5 @@
 const Product = require('../models/Product');
+const Seller = require('../models/Seller'); // ✅ مهم عشان populate يشتغل
 const path = require('path');
 
 const getProducts = async (req, res, next) => {
@@ -6,7 +7,7 @@ const getProducts = async (req, res, next) => {
     const { category, tag, minPrice, maxPrice, search, brand, sellerId, page = 1, limit = 20 } = req.query;
 
     const filter = { isActive: true };
-    if (category) filter.category = category;
+    if (category) filter.category = category.toLowerCase(); // ✅ lowercase دايما
     if (tag) filter.tags = tag;
     if (sellerId) filter.seller = sellerId;
     if (minPrice || maxPrice) {
@@ -17,10 +18,7 @@ const getProducts = async (req, res, next) => {
     if (search) filter.name = { $regex: search, $options: 'i' };
 
     if (brand) {
-      const Seller = require('../models/Seller');
       const seller = await Seller.findOne({ brandName: { $regex: `^${brand}$`, $options: 'i' } });
-      console.log("🔍 brand query:", brand);
-      console.log("🔍 seller found:", seller);
       if (seller) {
         filter.seller = seller._id;
       } else {
@@ -37,7 +35,10 @@ const getProducts = async (req, res, next) => {
 
     const total = await Product.countDocuments(filter);
     res.json({ success: true, data: { products, total, page: Number(page) } });
-  } catch (err) { next(err); }
+  } catch (err) {
+    console.error('getProducts error:', err.message);
+    next(err);
+  }
 };
 
 const getProduct = async (req, res, next) => {
@@ -67,7 +68,7 @@ const createProduct = async (req, res, next) => {
       description,
       price: Number(price),
       salePrice: salePrice ? Number(salePrice) : undefined,
-      category,
+      category: category?.toLowerCase() || 'all', // ✅ lowercase دايما
       tags: tags ? (Array.isArray(tags) ? tags : [tags]) : [],
       sizes: parsedSizes,
       colors: parsedColors,
@@ -92,7 +93,7 @@ const updateProduct = async (req, res, next) => {
     if (description !== undefined) product.description = description;
     if (price !== undefined) product.price = Number(price);
     if (salePrice !== undefined) product.salePrice = salePrice ? Number(salePrice) : undefined;
-    if (category !== undefined) product.category = category;
+    if (category !== undefined) product.category = category.toLowerCase(); // ✅
     if (stock !== undefined) product.stock = Number(stock);
     if (tags !== undefined) product.tags = Array.isArray(tags) ? tags : [tags];
 
@@ -104,7 +105,7 @@ const updateProduct = async (req, res, next) => {
     }
 
     if (req.files && req.files.length > 0) {
-      const newImages = req.files.map(f => `/uploads/products/${f.filename}`);
+      const newImages = req.files.map(f => f.path);
       product.images = [...product.images, ...newImages];
     }
 
