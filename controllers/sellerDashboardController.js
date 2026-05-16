@@ -120,4 +120,19 @@ const updateStock = async (req, res, next) => {
     }
 };
 
-module.exports = { getDashboard, getAnalytics, updateStock }; 
+const updateProfile = async (req, res, next) => {
+    try {
+        const { brandName, phone, description } = req.body;
+        const Seller = require('../models/Seller');
+        const seller = await Seller.findByIdAndUpdate(
+            req.user._id,
+            { brandName, phone, description },
+            { new: true }
+        ).select('-password');
+        res.json({ success: true, data: { seller } });
+    } catch (err) {
+        next(err);
+    }
+};
+
+module.exports = { getDashboard, getAnalytics, updateStock, updateProfile };

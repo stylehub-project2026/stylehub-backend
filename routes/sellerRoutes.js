@@ -1,12 +1,13 @@
 const express = require('express');
 const router = express.Router();
 
-const { getDashboard, getAnalytics, updateStock } = require('../controllers/sellerDashboardController');
+const { getDashboard, getAnalytics, updateStock, updateProfile } = require('../controllers/sellerDashboardController');
 const { getSellerOrders, getSellerOrder, updateOrderStatus } = require('../controllers/sellerOrderController');
 const { protect, sellerOnly } = require('../middleware/authMiddleware');
 
 router.use(protect, sellerOnly);
 
+router.put('/profile', updateProfile);
 router.get('/dashboard', getDashboard);
 router.get('/analytics', getAnalytics);
 router.patch('/products/:productId/stock', updateStock);
