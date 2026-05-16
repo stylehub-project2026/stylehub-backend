@@ -16,7 +16,11 @@ const getProducts = async (req, res, next) => {
       if (minPrice) filter.price.$gte = Number(minPrice);
       if (maxPrice) filter.price.$lte = Number(maxPrice);
     }
-    if (search) filter.name = { $regex: search, $options: 'i' };
+    if (search) filter.$or = [
+      { name: { $regex: search, $options: 'i' } },
+      { tags: { $regex: search, $options: 'i' } },
+      { description: { $regex: search, $options: 'i' } },
+    ];
 
     if (brand) {
       const seller = await Seller.findOne({ brandName: { $regex: `^${brand}$`, $options: 'i' } });
