@@ -228,4 +228,63 @@ const cancelOrder = async (req, res, next) => {
   }
 };
 
-module.exports = { createOrder, getMyOrders, getOrder, cancelOrder };
+const axios = require('axios');
+
+const initiatePaymobPayment = async (req, res, next) => {
+  try {
+    const { items, shippingAddress } = req.body;
+
+    let totalPrice = 0;
+    for (const item of items) {
+      const product = await Product.findById(item.productId);
+      if (!product) return res.status(400).json({ success: false, message: 'Product not found.' });
+      const price = product.salePrice || product.price;
+      totalPrice += price * item.quantity;
+    }
+    const shippingCost = 80;
+    const totalCents = (totalPrice + shippingCost) * 100;
+
+    // Step 1 — Auth
+    const authRes = await axios.post('https://accept.paymob.com/api/auth/tokens', {
+      api_key: process.env.PAYMOB_API_KEY,
+    });
+    const token = authRes.data.token;
+
+    // Step 2 — Register Order
+    const orderRes = await axios.post('https://accept.paymob.com/api/ecommerce/orders', {
+      auth_token: token,
+      delivery_needed: false,
+      amount_cents: totalCents,
+      currency: 'EGP',
+    });
+
+    // Step 3 — Payment Key
+    const payRes = await axios.post('https://accept.paymob.com/api/acceptance/payment_keys', {
+      auth_token: token,
+      amount_cents: totalCents,
+      expiration: 3600,
+      order_id: orderRes.data.id,
+      billing_data: {
+        first_name: shippingAddress?.firstName || 'Customer',
+        last_name: shippingAddress?.lastName || 'Customer',
+        email: req.user.email || 'customer@email.com',
+        phone_number: shippingAddress?.phone || '01000000000',
+        apartment: 'NA', floor: 'NA', building: 'NA',
+        shipping_method: 'NA', postal_code: 'NA',
+        street: shippingAddress?.street || 'NA',
+        city: shippingAddress?.city || 'Cairo',
+        country: 'EG',
+        state: shippingAddress?.governorate || 'Cairo',
+      },
+      currency: 'EGP',
+      integration_id: process.env.PAYMOB_INTEGRATION_ID,
+    });
+
+    res.json({ success: true, data: { paymentKey: payRes.data.token } });
+  } catch (err) {
+    console.error('Paymob error:', err.message);
+    next(err);
+  }
+};
+
+module.exports = { createOrder, getMyOrders, getOrder, cancelOrder, initiatePaymobPayment };
