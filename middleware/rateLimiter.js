@@ -4,6 +4,8 @@ module.exports = rateLimit({
   max: 20,
   standardHeaders: true,
   legacyHeaders: false,
-  validate: { xForwardedForHeader: false },
+  keyGenerator: (req) => {
+    return req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.ip || 'unknown';
+  },
   message: { success: false, message: 'Too many requests, please try again later.' },
 });
