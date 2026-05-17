@@ -5,7 +5,15 @@ module.exports = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   keyGenerator: (req) => {
-    return req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.ip || 'unknown';
+    const ip =
+      req.headers["x-forwarded-for"]?.split(",")[0]?.trim() ||
+      req.ip;
+
+    return ipKeyGenerator(ip);
   },
-  message: { success: false, message: 'Too many requests, please try again later.' },
+
+  message: {
+    success: false,
+    message: "Too many requests, please try again later.",
+  },
 });
