@@ -102,7 +102,7 @@ const createOrder = async (req, res, next) => {
   try {
     const { items, shippingAddress, paymentMethod = 'cod' } = req.body;
 
-    const validPayments = ['cod', 'card', 'fawry', 'instapay'];
+    const validPayments = ['cod', 'card', 'fawry'];
     if (!validPayments.includes(paymentMethod)) {
       return res.status(400).json({ success: false, message: 'Invalid payment method.' });
     }

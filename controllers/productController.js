@@ -1,5 +1,5 @@
 const Product = require('../models/Product');
-const Seller = require('../models/Seller'); // ✅ مهم عشان populate يشتغل
+const Seller = require('../models/Seller');
 const path = require('path');
 
 const getProducts = async (req, res, next) => {
