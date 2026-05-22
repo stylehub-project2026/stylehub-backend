@@ -133,4 +133,29 @@ const updateProfile = async (req, res, next) => {
   }
 };
 
-module.exports = { signUp, signIn, forgotPassword, resetPassword, getMe, updateProfile };
+const changePassword = async (req, res, next) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({ success: false, message: 'currentPassword and newPassword are required.' });
+    }
+    if (newPassword.length < 6) {
+      return res.status(400).json({ success: false, message: 'New password must be at least 6 characters.' });
+    }
+
+    const seller = await Seller.findById(req.user._id).select('+password');
+    const ok = await seller.comparePassword(currentPassword);
+    if (!ok) {
+      return res.status(401).json({ success: false, message: 'Current password is incorrect.' });
+    }
+
+    seller.password = newPassword;
+    await seller.save();
+
+    res.json({ success: true, message: 'Password changed successfully.' });
+  } catch (err) {
+    next(err);
+  }
+};
+
+module.exports = { signUp, signIn, forgotPassword, resetPassword, getMe, updateProfile, changePassword };
