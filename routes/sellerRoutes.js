@@ -10,7 +10,7 @@ const { protect, sellerOnly } = require('../middleware/authMiddleware');
 
 // ── Multer for logo upload ──
 const storage = multer.diskStorage({
-    destination: (req, file, cb) => cb(null, 'uploads/logos/'),
+    destination: (req, file, cb) => cb(null, path.join(__dirname, '../public/uploads/logos/')),
     filename: (req, file, cb) => cb(null, `logo-${Date.now()}${path.extname(file.originalname)}`),
 });
 const upload = multer({ storage, limits: { fileSize: 2 * 1024 * 1024 } });
