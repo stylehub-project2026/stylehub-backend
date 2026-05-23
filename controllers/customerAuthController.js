@@ -1,4 +1,5 @@
 const Customer = require('../models/Customer');
+const bcrypt = require('bcryptjs');
 const { generateToken, generateResetToken, verifyToken } = require('../utils/jwtUtils');
 const { sendResetPasswordEmail } = require('../utils/emailUtils');
 
@@ -155,4 +156,48 @@ const updateProfile = async (req, res, next) => {
   }
 };
 
-module.exports = { signUp, signIn, forgotPassword, resetPassword, getMe, updateProfile };
+// ── NEW: Change Password ──────────────────────────────────────────────────────
+const changePassword = async (req, res, next) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({ success: false, message: 'Both fields are required.' });
+    }
+    if (newPassword.length < 6) {
+      return res.status(400).json({ success: false, message: 'New password must be at least 6 characters.' });
+    }
+
+    const customer = await Customer.findById(req.user._id).select('+password');
+    const isMatch = await bcrypt.compare(currentPassword, customer.password);
+    if (!isMatch) {
+      return res.status(400).json({ success: false, message: 'Current password is incorrect.' });
+    }
+
+    customer.password = newPassword; // pre-save hook hashes it
+    await customer.save();
+
+    res.json({ success: true, message: 'Password updated successfully.' });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// ── NEW: Update Address ───────────────────────────────────────────────────────
+const updateAddress = async (req, res, next) => {
+  try {
+    const { street, city, governorate, postalCode } = req.body;
+
+    const customer = await Customer.findByIdAndUpdate(
+      req.user._id,
+      { address: { street: street || '', city: city || '', governorate: governorate || '', postalCode: postalCode || '' } },
+      { new: true, runValidators: true }
+    ).select('-password -resetToken -resetTokenExpiry');
+
+    res.json({ success: true, data: { user: customer } });
+  } catch (err) {
+    next(err);
+  }
+};
+
+module.exports = { signUp, signIn, forgotPassword, resetPassword, getMe, updateProfile, changePassword, updateAddress };

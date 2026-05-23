@@ -7,6 +7,12 @@ const customerSchema = new mongoose.Schema({
     email: { type: String, required: true, unique: true, lowercase: true },
     password: { type: String, required: true, select: false },
     phone: { type: String },
+    address: {
+        street: { type: String, default: '' },
+        city: { type: String, default: '' },
+        governorate: { type: String, default: '' },
+        postalCode: { type: String, default: '' },
+    },
     wishlist: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Product' }],
     resetToken: { type: String, select: false },
     resetTokenExpiry: { type: Date, select: false },
