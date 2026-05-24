@@ -18,6 +18,7 @@ const reviewRoutes = require('./routes/reviewRoutes');
 const addressRoutes = require('./routes/addressRoutes');
 const sellerRoutes = require('./routes/sellerRoutes');
 const sellerProfileRoutes = require('./routes/sellerProfileRoutes');
+const aiRoutes = require('./routes/aiRoutes');
 
 
 const path = require('path');
@@ -77,6 +78,7 @@ app.use('/api/reviews', reviewRoutes);
 app.use('/api/addresses', addressRoutes);
 app.use('/api/seller', sellerRoutes);
 app.use('/api/sellers', sellerProfileRoutes);
+app.use('/api/ai', aiRoutes);
 app.use(notFound);
 app.use(errorHandler);
 
