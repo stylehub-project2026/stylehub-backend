@@ -1,13 +1,19 @@
+let OpenAI;
+try {
+  OpenAI = require('openai').OpenAI;
+} catch {
+  OpenAI = null;
+}
+
 const generateOutfitImage = async (req, res, next) => {
   try {
-    if (!process.env.OPENAI_API_KEY) {
+    if (!process.env.OPENAI_API_KEY || !OpenAI) {
       return res.status(503).json({
         success: false,
         message: 'AI feature not configured. Add OPENAI_API_KEY to your .env file.',
       });
     }
 
-    const { OpenAI } = require('openai');
     const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
     const { gender = 'female', selectedTop, selectedBottom } = req.body;
