@@ -1,23 +1,13 @@
-let OpenAI;
-try {
-  OpenAI = require('openai').OpenAI;
-} catch {
-  OpenAI = null;
-}
-
 const generateOutfitImage = async (req, res, next) => {
   try {
-    if (!process.env.OPENAI_API_KEY || !OpenAI) {
+    if (!process.env.OPENAI_API_KEY) {
       return res.status(503).json({
         success: false,
-        message: 'AI feature not configured. Add OPENAI_API_KEY to your .env file.',
+        message: 'AI feature not configured. Add OPENAI_API_KEY to .env.',
       });
     }
 
-    const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-
     const { gender = 'female', selectedTop, selectedBottom } = req.body;
-
     const genderText = gender === 'male' ? 'male' : 'female';
     const parts = [selectedTop, selectedBottom].filter(Boolean);
     const outfit = parts.length
@@ -26,22 +16,32 @@ const generateOutfitImage = async (req, res, next) => {
 
     const prompt = `Professional fashion photography. A ${genderText} fashion model, full body shot from head to toe, wearing ${outfit}, neutral standing pose, clean white studio background, soft editorial lighting, high quality fashion shoot.`;
 
-    const response = await openai.images.generate({
-      model: 'dall-e-3',
-      prompt,
-      n: 1,
-      size: '1024x1024',
-      quality: 'standard',
+    const openaiRes = await fetch('https://api.openai.com/v1/images/generations', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
+      },
+      body: JSON.stringify({
+        model: 'dall-e-3',
+        prompt,
+        n: 1,
+        size: '1024x1024',
+        quality: 'standard',
+      }),
     });
 
-    res.json({ success: true, imageUrl: response.data[0].url });
-  } catch (err) {
-    if (err.status === 400) {
-      return res.status(400).json({
+    const data = await openaiRes.json();
+
+    if (!openaiRes.ok) {
+      return res.status(openaiRes.status).json({
         success: false,
-        message: 'Could not generate image. Try selecting different items.',
+        message: data.error?.message || 'OpenAI API error.',
       });
     }
+
+    res.json({ success: true, imageUrl: data.data[0].url });
+  } catch (err) {
     next(err);
   }
 };
