@@ -1,4 +1,5 @@
 const rateLimit = require('express-rate-limit');
+const { ipKeyGenerator } = require('express-rate-limit');
 
 module.exports = rateLimit({
   windowMs: 15 * 60 * 1000,
@@ -6,10 +7,8 @@ module.exports = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   keyGenerator: (req) => {
-    return (
-      req.headers["x-forwarded-for"]?.split(",")[0]?.trim() ||
-      req.ip
-    );
+    const ip = req.headers["x-forwarded-for"]?.split(",")[0]?.trim() || req.ip;
+    return ipKeyGenerator(ip);
   },
   message: {
     success: false,

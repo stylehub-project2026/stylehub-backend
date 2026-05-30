@@ -9,7 +9,7 @@ const sellerSchema = new mongoose.Schema({
     description: { type: String },
     category: { type: String, enum: ['women', 'men', 'kids', 'all'], default: 'all' },
     logo: { type: String },
-    isApproved: { type: Boolean, default: False },
+    isApproved: { type: Boolean, default: false },
     resetToken: { type: String, select: false },
     resetTokenExpiry: { type: Date, select: false },
 }, { timestamps: true });
