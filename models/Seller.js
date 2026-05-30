@@ -10,6 +10,8 @@ const sellerSchema = new mongoose.Schema({
     category: { type: String, enum: ['women', 'men', 'kids', 'all'], default: 'all' },
     logo: { type: String },
     isApproved: { type: Boolean, default: false },
+    subscriptionPlan: { type: String, enum: ['basic', 'standard', 'premium'], default: 'standard' },
+    discountEndsAt: { type: Date },
     resetToken: { type: String, select: false },
     resetTokenExpiry: { type: Date, select: false },
 }, { timestamps: true });
@@ -22,6 +24,10 @@ sellerSchema.pre('save', async function (next) {
 
 sellerSchema.methods.comparePassword = function (plain) {
     return bcrypt.compare(plain, this.password);
+};
+
+sellerSchema.methods.isDiscountActive = function () {
+    return this.discountEndsAt && new Date() < this.discountEndsAt;
 };
 
 module.exports = mongoose.model('Seller', sellerSchema);

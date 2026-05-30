@@ -11,13 +11,30 @@ const signUp = async (req, res, next) => {
       return res.status(409).json({ success: false, message: 'Email already registered.' });
     }
 
-    const seller = await Seller.create({ brandName, email, password, phone, description, category });
+    // Set discount end date = 30 days from now
+    const discountEndsAt = new Date();
+    discountEndsAt.setDate(discountEndsAt.getDate() + 30);
+
+    const seller = await Seller.create({
+      brandName, email, password, phone, description, category,
+      discountEndsAt,
+      isApproved: false,
+    });
+
     const token = generateToken(seller._id, 'seller');
 
     res.status(201).json({
       success: true,
       data: {
-        user: { id: seller._id, brandName: seller.brandName, email: seller.email, role: 'seller', isApproved: seller.isApproved },
+        user: {
+          id: seller._id,
+          brandName: seller.brandName,
+          email: seller.email,
+          role: 'seller',
+          isApproved: seller.isApproved,
+          discountEndsAt: seller.discountEndsAt,
+          subscriptionPlan: seller.subscriptionPlan,
+        },
         token,
       },
     });
@@ -45,7 +62,15 @@ const signIn = async (req, res, next) => {
     res.json({
       success: true,
       data: {
-        user: { id: seller._id, brandName: seller.brandName, email: seller.email, role: 'seller', isApproved: seller.isApproved },
+        user: {
+          id: seller._id,
+          brandName: seller.brandName,
+          email: seller.email,
+          role: 'seller',
+          isApproved: seller.isApproved,
+          discountEndsAt: seller.discountEndsAt,
+          subscriptionPlan: seller.subscriptionPlan,
+        },
         token,
       },
     });
