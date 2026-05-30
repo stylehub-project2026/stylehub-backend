@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const adminMiddleware = require('../middlewares/adminMiddleware');
+const adminMiddleware = require('../middleware/adminMiddleware');
 const {
     adminLogin,
     getSellers,
