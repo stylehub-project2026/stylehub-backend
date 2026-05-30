@@ -19,6 +19,8 @@ const addressRoutes = require('./routes/addressRoutes');
 const sellerRoutes = require('./routes/sellerRoutes');
 const sellerProfileRoutes = require('./routes/sellerProfileRoutes');
 const aiRoutes = require('./routes/aiRoutes');
+const adminRoutes = require('./routes/admin.routes');
+const adminRoutes = require('./routes/admin.routes');
 
 
 const path = require('path');
@@ -79,6 +81,7 @@ app.use('/api/addresses', addressRoutes);
 app.use('/api/seller', sellerRoutes);
 app.use('/api/sellers', sellerProfileRoutes);
 app.use('/api/ai', aiRoutes);
+app.use('/api/admin', adminRoutes);
 app.use(notFound);
 app.use(errorHandler);
 
