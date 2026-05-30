@@ -20,7 +20,7 @@ const sellerRoutes = require('./routes/sellerRoutes');
 const sellerProfileRoutes = require('./routes/sellerProfileRoutes');
 const aiRoutes = require('./routes/aiRoutes');
 const adminRoutes = require('./routes/admin.routes');
-const adminRoutes = require('./routes/admin.routes');
+
 
 
 const path = require('path');
