@@ -15,6 +15,9 @@ const orderSchema = new mongoose.Schema({
     subtotal: { type: Number, required: true },
     shippingCost: { type: Number, default: 80 },
     totalPrice: { type: Number, required: true },
+    commissionRate: { type: Number, default: 0.10 },
+    commissionAmount: { type: Number },
+    sellerEarnings: { type: Number },
     shippingAddress: {
         firstName: { type: String },
         lastName: { type: String },
@@ -35,5 +38,13 @@ const orderSchema = new mongoose.Schema({
         default: 'cod'
     },
 }, { timestamps: true });
+
+orderSchema.pre('save', function (next) {
+    if (this.isNew) {
+        this.commissionAmount = +(this.subtotal * this.commissionRate).toFixed(2);
+        this.sellerEarnings = +(this.subtotal - this.commissionAmount).toFixed(2);
+    }
+    next();
+});
 
 module.exports = mongoose.model('Order', orderSchema);

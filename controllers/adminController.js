@@ -1,5 +1,6 @@
 const Seller = require('../models/Seller');
 const Customer = require('../models/Customer');
+const Order = require('../models/Order');
 const jwt = require('jsonwebtoken');
 
 // Admin Login
@@ -32,7 +33,7 @@ exports.approveSeller = async (req, res) => {
     res.json({ message: 'Seller approved', seller });
 };
 
-// Reject/Delete seller
+// Delete seller
 exports.deleteSeller = async (req, res) => {
     await Seller.findByIdAndDelete(req.params.id);
     res.json({ message: 'Seller deleted' });
@@ -48,4 +49,17 @@ exports.getCustomers = async (req, res) => {
 exports.deleteCustomer = async (req, res) => {
     await Customer.findByIdAndDelete(req.params.id);
     res.json({ message: 'Customer deleted' });
+};
+
+// Get commissions
+exports.getCommissions = async (req, res) => {
+    const orders = await Order.find({ status: { $ne: 'cancelled' } })
+        .select('subtotal commissionAmount sellerEarnings commissionRate status createdAt')
+        .sort({ createdAt: -1 });
+
+    const totalCommission = orders.reduce((sum, o) => sum + (o.commissionAmount || 0), 0);
+    const totalSales = orders.reduce((sum, o) => sum + (o.subtotal || 0), 0);
+    const totalSellerEarnings = orders.reduce((sum, o) => sum + (o.sellerEarnings || 0), 0);
+
+    res.json({ orders, totalCommission, totalSales, totalSellerEarnings });
 };
