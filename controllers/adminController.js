@@ -22,13 +22,17 @@ exports.getSellers = async (req, res) => {
     res.json(sellers);
 };
 
-// Approve seller
+// Approve seller + record payment
 exports.approveSeller = async (req, res) => {
-    const seller = await Seller.findByIdAndUpdate(
-        req.params.id,
-        { isApproved: true },
-        { new: true }
-    );
+    const { paidAmount } = req.body;
+    const updateData = {
+        isApproved: true,
+        ...(paidAmount && {
+            subscriptionPaidAmount: Number(paidAmount),
+            subscriptionPaidAt: new Date(),
+        }),
+    };
+    const seller = await Seller.findByIdAndUpdate(req.params.id, updateData, { new: true });
     if (!seller) return res.status(404).json({ message: 'Seller not found' });
     res.json({ message: 'Seller approved', seller });
 };
@@ -51,7 +55,7 @@ exports.deleteCustomer = async (req, res) => {
     res.json({ message: 'Customer deleted' });
 };
 
-// Get commissions
+// Get commissions (orders)
 exports.getCommissions = async (req, res) => {
     const orders = await Order.find({ status: { $ne: 'cancelled' } })
         .select('subtotal commissionAmount sellerEarnings commissionRate status createdAt')
@@ -62,4 +66,14 @@ exports.getCommissions = async (req, res) => {
     const totalSellerEarnings = orders.reduce((sum, o) => sum + (o.sellerEarnings || 0), 0);
 
     res.json({ orders, totalCommission, totalSales, totalSellerEarnings });
+};
+
+// Get subscription revenue
+exports.getSubscriptionRevenue = async (req, res) => {
+    const sellers = await Seller.find({ subscriptionPaidAmount: { $gt: 0 } })
+        .select('brandName email subscriptionPlan subscriptionPaidAmount subscriptionPaidAt discountEndsAt');
+
+    const totalSubscriptionRevenue = sellers.reduce((sum, s) => sum + (s.subscriptionPaidAmount || 0), 0);
+
+    res.json({ sellers, totalSubscriptionRevenue });
 };

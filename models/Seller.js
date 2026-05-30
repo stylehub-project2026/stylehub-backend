@@ -11,6 +11,8 @@ const sellerSchema = new mongoose.Schema({
     logo: { type: String },
     isApproved: { type: Boolean, default: false },
     subscriptionPlan: { type: String, enum: ['basic', 'standard', 'premium'], default: 'standard' },
+    subscriptionPaidAmount: { type: Number, default: 0 },
+    subscriptionPaidAt: { type: Date },
     discountEndsAt: { type: Date },
     resetToken: { type: String, select: false },
     resetTokenExpiry: { type: Date, select: false },

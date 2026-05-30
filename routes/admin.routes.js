@@ -9,6 +9,7 @@ const {
     getCustomers,
     deleteCustomer,
     getCommissions,
+    getSubscriptionRevenue,
 } = require('../controllers/adminController');
 
 router.post('/login', adminLogin);
@@ -18,5 +19,6 @@ router.delete('/sellers/:id', adminMiddleware, deleteSeller);
 router.get('/customers', adminMiddleware, getCustomers);
 router.delete('/customers/:id', adminMiddleware, deleteCustomer);
 router.get('/commissions', adminMiddleware, getCommissions);
+router.get('/subscription-revenue', adminMiddleware, getSubscriptionRevenue);
 
 module.exports = router;
