@@ -17,6 +17,7 @@ const upload = multer({ storage, limits: { fileSize: 2 * 1024 * 1024 } });
 
 // ── Profile update (with optional logo) ──
 const Seller = require('../models/Seller');
+const { sendSubscriptionStatusEmail } = require('../utils/emailUtils');
 const updateProfile = async (req, res, next) => {
     try {
         const { brandName, description, category, phone } = req.body;
@@ -66,14 +67,55 @@ router.patch('/admin/approve-subscription/:sellerId', protect, async (req, res, 
             {
                 subscriptionStatus: 'active',
                 isApproved: true,
-                discountEndsAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days discount
+                discountEndsAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
             },
             { new: true }
         ).select('-password -resetToken -resetTokenExpiry');
 
         if (!seller) return res.status(404).json({ success: false, message: 'Seller not found' });
 
+        // Send approval email
+        try {
+            await sendSubscriptionStatusEmail({
+                to: seller.email,
+                brandName: seller.brandName,
+                status: 'active',
+            });
+        } catch (emailErr) {
+            console.error('Approval email failed:', emailErr.message);
+        }
+
         res.json({ success: true, message: 'Seller subscription activated.', data: seller });
+    } catch (err) {
+        next(err);
+    }
+});
+
+// ── Admin: reject seller subscription ──
+router.patch('/admin/reject-subscription/:sellerId', protect, async (req, res, next) => {
+    try {
+        if (req.user.role !== 'admin') return res.status(403).json({ success: false, message: 'Admins only' });
+
+        const seller = await Seller.findByIdAndUpdate(
+            req.params.sellerId,
+            { subscriptionStatus: 'none', isApproved: false },
+            { new: true }
+        ).select('-password -resetToken -resetTokenExpiry');
+
+        if (!seller) return res.status(404).json({ success: false, message: 'Seller not found' });
+
+        // Send rejection email
+        try {
+            await sendSubscriptionStatusEmail({
+                to: seller.email,
+                brandName: seller.brandName,
+                status: 'rejected',
+            });
+        } catch (emailErr) {
+            console.error('Rejection email failed:', emailErr.message);
+        }
+
+        res.json({ success: true, message: 'Seller subscription rejected.', data: seller });
     } catch (err) {
         next(err);
     }

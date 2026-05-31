@@ -49,4 +49,70 @@ const sendResetPasswordEmail = async ({ to, name, resetToken, role }) => {
   });
 };
 
-module.exports = { sendResetPasswordEmail };
+const sendSubscriptionStatusEmail = async ({ to, brandName, status }) => {
+  const isApproved = status === 'active';
+
+  const transporter = createTransporter();
+
+  const subject = isApproved
+    ? '🎉 Your StyleHub Store is Live!'
+    : '❌ Your StyleHub Application Was Not Approved';
+
+  const html = isApproved
+    ? `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <div style="background: linear-gradient(135deg, #5e6d41, #92a079); padding: 2rem; text-align: center; border-radius: 12px 12px 0 0;">
+          <h1 style="color: #fff; margin: 0; font-size: 1.8rem;">🎉 Welcome to StyleHub!</h1>
+        </div>
+        <div style="padding: 2rem; background: #fff; border: 1px solid #e0e0e0; border-radius: 0 0 12px 12px;">
+          <h2 style="color: #5e6d41;">Hi ${brandName},</h2>
+          <p style="color: #555; line-height: 1.7;">
+            Great news! Your store has been <strong style="color: #2d7a35;">approved</strong> and is now live on StyleHub.
+            Customers can already find your brand page.
+          </p>
+          <a href="${process.env.FRONTEND_URL || 'https://stylehub-frontend-ten.vercel.app'}/seller/dashboard"
+             style="display:inline-block; padding:14px 28px; background:#7b8b5b;
+                    color:#fff; border-radius:25px; text-decoration:none; margin:16px 0; font-weight:700;">
+            Go to Your Dashboard →
+          </a>
+          <p style="color:#888; font-size:13px; margin-top: 1rem;">
+            Start adding products and grow your brand on StyleHub!
+          </p>
+          <hr style="border:none; border-top:1px solid #eee; margin: 1.5rem 0;">
+          <p style="color:#aaa; font-size:11px;">© ${new Date().getFullYear()} StyleHub</p>
+        </div>
+      </div>
+    `
+    : `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <div style="background: #c0392b; padding: 2rem; text-align: center; border-radius: 12px 12px 0 0;">
+          <h1 style="color: #fff; margin: 0; font-size: 1.8rem;">Application Update</h1>
+        </div>
+        <div style="padding: 2rem; background: #fff; border: 1px solid #e0e0e0; border-radius: 0 0 12px 12px;">
+          <h2 style="color: #333;">Hi ${brandName},</h2>
+          <p style="color: #555; line-height: 1.7;">
+            Unfortunately, we were unable to verify your payment and your store application was <strong style="color: #c0392b;">not approved</strong> at this time.
+          </p>
+          <p style="color: #555; line-height: 1.7;">
+            This may be due to an issue with the payment details or reference. Please contact our support team for assistance.
+          </p>
+          <a href="mailto:support@stylehub.com"
+             style="display:inline-block; padding:14px 28px; background:#c0392b;
+                    color:#fff; border-radius:25px; text-decoration:none; margin:16px 0; font-weight:700;">
+            Contact Support
+          </a>
+          <hr style="border:none; border-top:1px solid #eee; margin: 1.5rem 0;">
+          <p style="color:#aaa; font-size:11px;">© ${new Date().getFullYear()} StyleHub</p>
+        </div>
+      </div>
+    `;
+
+  await transporter.sendMail({
+    from: process.env.EMAIL_FROM || '"StyleHub" <noreply@stylehub.com>',
+    to,
+    subject,
+    html,
+  });
+};
+
+module.exports = { sendResetPasswordEmail, sendSubscriptionStatusEmail };
