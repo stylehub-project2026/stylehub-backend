@@ -4,7 +4,9 @@ const Review = require('../models/Review');
 
 const getDashboard = async (req, res, next) => {
     try {
+        const Seller = require('../models/Seller');
         const sellerId = req.user._id;
+        const seller = await Seller.findById(sellerId).select('brandName email subscriptionStatus subscriptionPlan');
 
         const products = await Product.find({ seller: sellerId, isActive: true });
         const productIds = products.map(p => p._id);
@@ -40,6 +42,11 @@ const getDashboard = async (req, res, next) => {
         res.json({
             success: true,
             data: {
+                seller: {
+                    subscriptionStatus: seller?.subscriptionStatus || 'none',
+                    subscriptionPlan: seller?.subscriptionPlan,
+                    brandName: seller?.brandName,
+                },
                 totalProducts: products.length,
                 activeProducts: products.filter(p => p.isActive).length,
                 totalOrders: orders.length,
