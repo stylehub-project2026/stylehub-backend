@@ -14,6 +14,9 @@ const protect = async (req, res, next) => {
       req.user = await Customer.findById(decoded.id).select('-password -resetToken -resetTokenExpiry');
     } else if (decoded.role === 'seller') {
       req.user = await Seller.findById(decoded.id).select('-password -resetToken -resetTokenExpiry');
+    } else if (decoded.role === 'admin') {
+      // Admin is not stored in DB — just attach decoded info
+      req.user = { _id: decoded.id, role: 'admin' };
     }
     if (!req.user) return res.status(401).json({ success: false, message: 'User no longer exists' });
     req.user.role = decoded.role;

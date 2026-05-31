@@ -7,6 +7,7 @@ const { getDashboard, getAnalytics, updateStock } = require('../controllers/sell
 const { getSellerOrders, getSellerOrder, updateOrderStatus } = require('../controllers/sellerOrderController');
 const { changePassword } = require('../controllers/sellerAuthController');
 const { protect, sellerOnly } = require('../middleware/authMiddleware');
+const adminMiddleware = require('../middleware/adminMiddleware');
 
 const Seller = require('../models/Seller');
 const { sendSubscriptionStatusEmail } = require('../utils/emailUtils');
