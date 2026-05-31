@@ -20,6 +20,7 @@ const sellerRoutes = require('./routes/sellerRoutes');
 const sellerProfileRoutes = require('./routes/sellerProfileRoutes');
 const aiRoutes = require('./routes/aiRoutes');
 const adminRoutes = require('./routes/admin.routes');
+const contactRoutes = require('./routes/contactRoutes');
 
 
 
@@ -82,6 +83,7 @@ app.use('/api/seller', sellerRoutes);
 app.use('/api/sellers', sellerProfileRoutes);
 app.use('/api/ai', aiRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/contact', contactRoutes);
 app.use(notFound);
 app.use(errorHandler);
 
