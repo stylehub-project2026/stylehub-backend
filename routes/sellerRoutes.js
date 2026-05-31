@@ -98,7 +98,48 @@ router.patch('/admin/reject-subscription/:sellerId', protect, async (req, res, n
 
         const seller = await Seller.findByIdAndUpdate(
             req.params.sellerId,
-            { subscriptionStatus: 'none', isApproved: false },
+            router.patch('/admin/reject-subscription/:sellerId', protect, async (req, res, next) => {
+                try {
+                    if (req.user.role !== 'admin') {
+                        return res.status(403).json({ success: false, message: 'Admins only' });
+                    }
+
+                    const { reason } = req.body;
+
+                    const seller = await Seller.findByIdAndUpdate(
+                        req.params.sellerId,
+                        {
+                            subscriptionStatus: 'rejected',
+                            isApproved: false,
+                            rejectionReason: reason || 'Your payment or application could not be verified.',
+                            rejectedAt: new Date(),
+                        },
+                        { new: true }
+                    ).select('-password -resetToken -resetTokenExpiry');
+
+                    if (!seller) {
+                        return res.status(404).json({ success: false, message: 'Seller not found' });
+                    }
+
+                    try {
+                        await sendSubscriptionStatusEmail({
+                            to: seller.email,
+                            brandName: seller.brandName,
+                            status: 'rejected',
+                        });
+                    } catch (emailErr) {
+                        console.error('Rejection email failed:', emailErr.message);
+                    }
+
+                    res.json({
+                        success: true,
+                        message: 'Seller subscription rejected.',
+                        data: seller,
+                    });
+                } catch (err) {
+                    next(err);
+                }
+            }),
             { new: true }
         ).select('-password -resetToken -resetTokenExpiry');
 
