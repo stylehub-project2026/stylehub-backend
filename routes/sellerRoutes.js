@@ -36,6 +36,49 @@ const updateProfile = async (req, res, next) => {
     }
 };
 
+// ── Payment submission (seller confirms they sent payment) ──
+router.post('/payment-submitted', protect, sellerOnly, async (req, res, next) => {
+    try {
+        const { plan, amount } = req.body;
+        const validPlans = ['basic', 'standard', 'premium'];
+        if (!validPlans.includes(plan)) return res.status(400).json({ success: false, message: 'Invalid plan' });
+
+        await Seller.findByIdAndUpdate(req.user._id, {
+            subscriptionPlan: plan,
+            subscriptionPaidAmount: amount,
+            subscriptionStatus: 'pending',
+            subscriptionPaidAt: new Date(),
+        });
+
+        res.json({ success: true, message: 'Payment submission recorded. Awaiting admin approval.' });
+    } catch (err) {
+        next(err);
+    }
+});
+
+// ── Admin: approve seller subscription ──
+router.patch('/admin/approve-subscription/:sellerId', protect, async (req, res, next) => {
+    try {
+        if (req.user.role !== 'admin') return res.status(403).json({ success: false, message: 'Admins only' });
+
+        const seller = await Seller.findByIdAndUpdate(
+            req.params.sellerId,
+            {
+                subscriptionStatus: 'active',
+                isApproved: true,
+                discountEndsAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days discount
+            },
+            { new: true }
+        ).select('-password -resetToken -resetTokenExpiry');
+
+        if (!seller) return res.status(404).json({ success: false, message: 'Seller not found' });
+
+        res.json({ success: true, message: 'Seller subscription activated.', data: seller });
+    } catch (err) {
+        next(err);
+    }
+});
+
 router.use(protect, sellerOnly);
 
 router.put('/profile', upload.single('logo'), updateProfile);

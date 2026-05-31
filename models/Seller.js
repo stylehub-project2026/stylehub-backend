@@ -10,6 +10,7 @@ const sellerSchema = new mongoose.Schema({
     category: { type: String, enum: ['women', 'men', 'kids', 'all'], default: 'all' },
     logo: { type: String },
     isApproved: { type: Boolean, default: false },
+    subscriptionStatus: { type: String, enum: ['none', 'pending', 'active'], default: 'none' },
     subscriptionPlan: { type: String, enum: ['basic', 'standard', 'premium'], default: 'standard' },
     subscriptionPaidAmount: { type: Number, default: 0 },
     subscriptionPaidAt: { type: Date },
