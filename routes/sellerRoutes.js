@@ -102,15 +102,8 @@ router.post('/payment-submitted', protect, sellerOnly, async (req, res, next) =>
 // Admin approves seller subscription
 // PATCH /api/seller/admin/approve-subscription/:sellerId
 // ─────────────────────────────────────────────
-router.patch('/admin/approve-subscription/:sellerId', protect, async (req, res, next) => {
+router.patch('/admin/approve-subscription/:sellerId', adminMiddleware, async (req, res, next) => {
     try {
-        if (!req.user || req.user.role !== 'admin') {
-            return res.status(403).json({
-                success: false,
-                message: 'Admins only',
-            });
-        }
-
         const { paidAmount } = req.body;
 
         const updates = {
@@ -166,15 +159,8 @@ router.patch('/admin/approve-subscription/:sellerId', protect, async (req, res, 
 // Admin rejects seller subscription
 // PATCH /api/seller/admin/reject-subscription/:sellerId
 // ─────────────────────────────────────────────
-router.patch('/admin/reject-subscription/:sellerId', protect, async (req, res, next) => {
+router.patch('/admin/reject-subscription/:sellerId', adminMiddleware, async (req, res, next) => {
     try {
-        if (!req.user || req.user.role !== 'admin') {
-            return res.status(403).json({
-                success: false,
-                message: 'Admins only',
-            });
-        }
-
         const { reason } = req.body;
 
         const seller = await Seller.findByIdAndUpdate(
