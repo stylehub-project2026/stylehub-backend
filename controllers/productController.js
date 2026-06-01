@@ -1,5 +1,6 @@
 const Product = require('../models/Product');
 const Seller = require('../models/Seller');
+const slugify = require('../utils/slugify');
 const path = require('path');
 
 const getProducts = async (req, res, next) => {
@@ -23,8 +24,10 @@ const getProducts = async (req, res, next) => {
       { description: { $regex: search, $options: 'i' } },
     ];
 
+    // Brand filter — match by slug (works for any seller name)
     if (brand) {
-      const seller = await Seller.findOne({ brandName: { $regex: `^${brand}$`, $options: 'i' } });
+      const targetSlug = slugify(brand);
+      const seller = await Seller.findOne({ brandSlug: targetSlug });
       if (seller) {
         filter.seller = seller._id;
       } else {
@@ -34,7 +37,7 @@ const getProducts = async (req, res, next) => {
 
     const skip = (Number(page) - 1) * Number(limit);
     const products = await Product.find(filter)
-      .populate('seller', 'brandName logo description')
+      .populate('seller', 'brandName brandSlug logo description')
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(Number(limit));
@@ -49,7 +52,7 @@ const getProducts = async (req, res, next) => {
 
 const getProduct = async (req, res, next) => {
   try {
-    const product = await Product.findById(req.params.id).populate('seller', 'brandName logo description');
+    const product = await Product.findById(req.params.id).populate('seller', 'brandName brandSlug logo description');
     if (!product || !product.isActive) {
       return res.status(404).json({ success: false, message: 'Product not found.' });
     }
